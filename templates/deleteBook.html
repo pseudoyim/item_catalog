@@ -1,0 +1,14 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+
+	<h1>Are you sure you want to delete <em>{{ info.title }}</em> ?</h1>
+		
+	<form action="{{ url_for('delete_book', genre=genre, book_id=book_id) }}" method="POST">
+		<input type="submit" value="Delete">
+	</form>
+	
+	<br>
+	<a href="{{ url_for('book_info', genre=genre, book_id=book_id) }}">Cancel</a>
+
+{% endblock %}

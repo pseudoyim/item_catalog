@@ -1,0 +1,76 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+	<div class="row">
+		<div class="col-md-10"></div>
+		<div class="col-md-2 text-right">
+					</div>
+	</div>
+	<div class="row divider blue">
+		<div class="col-md-12"></div>
+	</div>
+	<div class="row banner main">
+		<div class="col-md-12">
+			<h1>My Books</h1>
+		</div>
+	</div>
+
+<div class = 'flash'>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+		  
+		<ul>
+		{% for message in messages %}
+			<li> <strong> {{ message }} </strong> </li>
+		{% endfor %}
+		</ul>
+		{% endif %}
+	{% endwith %}
+
+</div>
+	
+	<div class="row padding-top padding-bottom">
+		
+		<!-- Row: ADD BOOK button -->
+		
+		<div class="col-md-2">
+			<a href="{{url_for('new_book')}}">
+				<button class="btn btn-default" id="new-restaurant">
+					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>Add Book
+				</button>
+			</a>
+		</div>
+		
+		<!-- Padding -->
+		<div class="col-md-10"></div>
+	
+	</div>
+	
+
+	<div class="container">
+		<div class="row">
+			<!-- GENRES -->
+			<div class="col-lg-4 genre-panel">
+				{% for genre in genres %}
+				<div class="row">
+					<div class="col-md-10 restaurant-list">
+						<h3>{{genre}}</h3>
+					</div>
+					<div class="col-md-2"></div>
+				</div>
+				{% endfor %}
+			</div>
+			
+				<!-- LATEST BOOKS -->
+			<div class="col-lg-8">
+				<h2>Latest Books</h2>
+					<br>
+					<h3>Your latest books would appear here.</h3>
+					<h3>Sign up now to start keeping track of your reading!</h3>
+			</div>
+
+		</div>
+	</div>
+
+{% endblock %}
+

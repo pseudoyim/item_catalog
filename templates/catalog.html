@@ -1,0 +1,118 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+	<div class="row">
+		<div class="col-md-10"></div>
+		<div class="col-md-2 text-right">
+					</div>
+	</div>
+	<div class="row divider blue">
+		<div class="col-md-12"></div>
+	</div>
+	<div class="row banner main">
+		<div class="col-md-12">
+			<h1>My Books</h1>
+		</div>
+	</div>
+
+<div class = 'flash'>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+		  
+		<ul>
+		{% for message in messages %}
+			<li> <strong> {{ message }} </strong> </li>
+		{% endfor %}
+		</ul>
+		{% endif %}
+	{% endwith %}
+
+</div>
+	
+	<div class="row padding-top padding-bottom">
+		
+		<!-- Row: ADD BOOK button -->
+		
+		<div class="col-md-2">
+			<a href="{{url_for('new_book')}}">
+				<button class="btn btn-default" id="new-restaurant">
+					<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>Add Book
+				</button>
+			</a>
+		</div>
+		
+		<!-- Padding -->
+		<div class="col-md-10"></div>
+	
+	</div>
+	
+
+	<div class="container">
+		<div class="row">
+			
+			<!-- GENRES -->
+			<div class="col-lg-4 genre-panel">
+				{% for genre in genres %}
+				<a href = "{{ url_for('genre_items', genre=genre) }}">
+				<div class="row">
+
+					<div class="col-md-10 restaurant-list">
+						<h3>{{genre}}</h3>
+					</div>
+
+					<div class="col-md-2"></div>
+
+				</div>
+				</a>
+				{% endfor %}
+			</div>
+			
+				<!-- LATEST BOOKS -->
+			<div class="col-lg-8">
+
+				{% if main_page %}
+
+					<h2>Latest Books</h2>
+					
+					
+					{% if latest_books|length == 0 %}
+
+							<p>Welcome! You have no books yet. <a href="{{url_for('new_book')}}">Add one now!</a></p>
+
+					{% else %}
+
+						<!-- i[0]=books.title ; i[1]=genres.genre ; i[2]=books.id -->
+						{% for i in latest_books %}
+						
+							<a href = "{{ url_for('book_info', genre=i[1], book_id=i[2]) }}">
+							<p><strong>{{ i[0] }}</strong> ({{ i[1] }}) </p>
+							</a>
+						
+						{% endfor %}
+
+					{% endif %}
+
+				<!-- For showing the items under each genre (genre_items)-->
+				{% else %}
+					
+					<h2>{{ genre }} ({{ count }} items)</h2>
+						
+					<!-- i[0]=books.title ; i[1]=books.id -->
+					{% for i in items %}
+						<a href = "{{ url_for('book_info', genre=genre, book_id=i[1]) }}">
+						<p><strong>{{ i[0] }}</strong></p>
+						</a>
+					{% endfor %}
+
+				{% endif %}
+
+
+			</div>
+		
+
+
+		</div>
+	</div>
+
+{% endblock %}
+

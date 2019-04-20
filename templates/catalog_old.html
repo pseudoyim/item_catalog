@@ -1,0 +1,35 @@
+<html>
+<head>
+	<link rel=stylesheet type=text/css href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+	<h1>Books App</h1>
+
+	<h2>Genres</h2>
+
+		{% for i in genres %}
+		<p>{{ i }}</p>
+		{% endfor %}
+
+	<!-- For the main page (show_catalog)-->
+	{% if main_page %}
+		<h2>Latest Books</h2>
+			
+			{% for i in latest_books %}
+			<p>{{ i[0] }}</p><p id="category">{{ i[1] }}</p>
+			{% endfor %}
+
+	<!-- For showing the items under each genre (genre_items)-->
+	{% else %}
+		
+		<h2>{{ genre }} ({{ count }} items)</h2>
+			
+			{% for i in items %}
+			<p>{{ i[0] }}</p>
+			{% endfor %}
+
+	{% endif %}
+
+</body>
+</html>

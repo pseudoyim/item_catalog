@@ -1,0 +1,55 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+
+<h1>New Book</h1>
+
+	<div class = 'flash'>
+		{% with messages = get_flashed_messages() %}
+		  {% if messages %}
+			  
+			<ul>
+			{% for message in messages %}
+				<li> <strong> {{ message }} </strong> </li>
+			{% endfor %}
+			</ul>
+			{% endif %}
+		{% endwith %}
+
+	</div>
+
+	<form action="{{ url_for('new_book') }}" method="POST">
+
+		<p>Title:</p>
+		<input type="text" size="30" name="title">
+		
+		<p>Author:</p>
+		<input type="text" size="30" name="author_last_name" placeholder="Last name">
+		<input type="text" size="30" name="author_first_name" placeholder="First name">
+
+		<p>Genre:</p>
+		<select name="genre">
+			{% for i in genres %}
+			<option value="{{ i }}">{{ i }}</option>
+			{% endfor %}
+		</select>
+
+		<p>Pages:</p>
+		<input type="text" size="10" name="pages">
+
+		<p>Date I finished reading:</p>
+		<input type="date" name="date_finished">
+
+		<p>Synopsis:</p>
+		<!-- <input type="text" size="100" name="synopsis"> -->
+		<textarea rows="4" cols="50" name="synopsis"></textarea>
+
+		<br><br>
+		<input type="submit" value="Create">
+		
+	</form>
+
+	<br>
+	<a href="{{ url_for('show_catalog') }}">Cancel</a>
+
+{% endblock %}
