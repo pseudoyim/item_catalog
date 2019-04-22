@@ -89,5 +89,5 @@ class Books(Base):
         }
 
 
-engine = create_engine('postgres://owner:password}@localhost/catalog')
+engine = create_engine('postgres://owner:password@localhost/catalog')
 Base.metadata.create_all(engine)

@@ -75,7 +75,7 @@ COPY books (id, title, author_id, genre_id, pages, synopsis, date_finished, user
 
 -- 'users' data
 COPY users (id, last_name, first_name, email, picture) FROM stdin;
-1	Yim	Paul	pyim@email.com	
+1	Yim	Paul	paul.j.yim@gmail.com	https://lh6.googleusercontent.com/-Y8ycnBRsm8A/AAAAAAAAAAI/AAAAAAAACTs/YraoCkWoPv8/photo.jpg
 2	Smith	Winston	winston@email.com	
 3	Putin	Vladimir	vlad@email.com	
 \.

@@ -1,6 +1,6 @@
 from database_setup import Base, Authors, Genres, Books, Users
 from flask import Flask, redirect, render_template, \
-                    request, url_for, flash, jsonify, make_response
+    request, url_for, flash, jsonify, make_response
 from flask import session as login_session
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
@@ -68,6 +68,14 @@ q_get_existing_authors = '''
     WHERE user_id = {};
     '''
 
+q_get_author_id = '''
+    SELECT id
+    FROM authors
+    WHERE last_name='{}'
+      AND first_name='{}'
+      AND user_id='{}';
+    '''
+
 q_edit_book_info = '''
     SELECT  books.id
         , books.title
@@ -87,7 +95,7 @@ q_edit_book_info = '''
     '''
 
 
-''' LOGIN '''
+# LOGIN
 @app.route('/login')
 def showLogin():
     # Create anti-forgery state token
@@ -211,8 +219,20 @@ def getUserID(email):
         return None
 
 
-# DISCONNECT - Revoke a current user's token and reset their login_session
+def check_user_book_authorized(user_id, book_id):
+    result = session.execute('''
+        SELECT id
+        FROM books
+        WHERE user_id = '{}'
+          AND id = '{}';
+        '''.format(user_id, book_id))
+    result = list(result)
+    if not result:
+        return False
+    return True
 
+
+# DISCONNECT - Revoke a current user's token and reset their login_session
 @app.route('/gdisconnect')
 def gdisconnect():
     access_token = login_session.get('access_token')
@@ -225,7 +245,8 @@ def gdisconnect():
     print('In gdisconnect access token is %s', access_token)
     print('User name is: ')
     print(login_session['username'])
-    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % login_session['access_token']
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' \
+          % login_session['access_token']
     h = httplib2.Http()
     result = h.request(url, 'GET')[0]
     print('result is ')
@@ -241,12 +262,13 @@ def gdisconnect():
         flash('Successfully logged out.')
         return redirect(url_for('show_catalog'))
     else:
-        response = make_response(json.dumps('Failed to revoke token for given user.'), 400)
+        response = make_response(json.dumps('Failed to revoke token \
+                    for given user.'), 400)
         response.headers['Content-Type'] = 'application/json'
         return response
 
 
-''' JSON API ENDPOINTS '''
+# JSON API ENDPOINTS
 @app.route('/catalog/<genre>/<int:book_id>/json')
 def books_json(genre, book_id):
     # Check if user is logged in
@@ -267,7 +289,7 @@ def catalog_json():
     return jsonify(Books=[i.serialize for i in items])
 
 
-''' APP PAGES '''
+# APP PAGES
 @app.route('/')
 @app.route('/catalog/')
 def show_catalog():
@@ -284,7 +306,8 @@ def show_catalog():
         user_id = createUser(login_session)
     latest_books = session.execute(q_latest_books.format(user_id))
     latest_books = list(latest_books)
-    return render_template('catalog.html', main_page=True, genres=genres, latest_books=latest_books)
+    return render_template('catalog.html', main_page=True, genres=genres,
+                           latest_books=latest_books)
 
 
 @app.route('/catalog/<genre>/items/', methods=['GET'])
@@ -305,24 +328,32 @@ def genre_items(genre):
     genre = genre.capitalize()
 
     return render_template('catalog.html',
-                            main_page=False,
-                            genres=genres,
-                            genre=genre,
-                            items=items,
-                            count=count)
+                           main_page=False,
+                           genres=genres,
+                           genre=genre,
+                           items=items,
+                           count=count)
 
 
 @app.route('/catalog/<genre>/<int:book_id>/', methods=['GET'])
 def book_info(genre, book_id):
+    user_id = getUserID(login_session['email'])
+
     # Check if user is logged in
     if 'username' not in login_session:
         return render_template('public.html', genres=genres)
+
+    # Check user_id is authorized for book_id
+    if check_user_book_authorized(user_id, book_id) is False:
+        flash('You are not authorized to view this item.', 'flash')
+        return render_template('catalog.html', flash=flash)
 
     user_id = getUserID(login_session['email'])
     info = list(session.execute(q_book_info.format(book_id, user_id)))
     # Returns a list containing a single tuple, so get index 0.
     info = info[0]
-    return render_template('book.html', genre=genre, book_id=book_id, info=info)
+    return render_template('book.html',
+                           genre=genre, book_id=book_id, info=info)
 
 
 # ADD BOOK
@@ -337,22 +368,33 @@ def new_book():
 
     if request.method == 'POST':
         user_id = getUserID(login_session['email'])
-        existing_authors = session.execute(q_get_existing_authors.format(user_id))
+        existing_authors = \
+            session.execute(q_get_existing_authors.format(user_id))
         existing_authors = [i[0] for i in list(existing_authors)]
         first_name = request.form['author_first_name'].strip()
         last_name = request.form['author_last_name'].strip()
         full_name = first_name + ' ' + last_name
+        print('FULLNAME', full_name)
 
         # If author is not in 'authors', add new entry to 'authors' table
         if full_name not in existing_authors:
             new_author = Authors(last_name=request.form['author_last_name'],
-                                 first_name=request.form['author_first_name'])
+                                 first_name=request.form['author_first_name'],
+                                 user_id=user_id)
             session.add(new_author)
             session.commit()
 
-        author_id = session.execute(f"SELECT id FROM authors WHERE first_name='{first_name}' AND last_name='{last_name}';")
-        author_id = list(author_id)[0][0]
-        genre_id = session.execute(f"SELECT id FROM genres WHERE genre='{request.form['genre']}';")
+        author_id = session.execute(f"SELECT id \
+                                    FROM authors \
+                                    WHERE first_name='{first_name}' \
+                                      AND last_name='{last_name}';")
+        author_id = list(author_id)
+        print('AUTHOR_ID', author_id)
+        author_id = author_id[0][0]
+
+        genre_id = session.execute(f"SELECT id \
+                                   FROM genres \
+                                   WHERE genre='{request.form['genre']}';")
         genre_id = list(genre_id)[0][0]
         title = request.form['title']
         pages = request.form['pages']
@@ -360,12 +402,12 @@ def new_book():
         date_finished = request.form['date_finished']
 
         new_item = Books(title=title,
-                        author_id=author_id,
-                        genre_id=genre_id,
-                        pages=pages,
-                        synopsis=synopsis,
-                        date_finished=date_finished,
-                        user_id=user_id)
+                         author_id=author_id,
+                         genre_id=genre_id,
+                         pages=pages,
+                         synopsis=synopsis,
+                         date_finished=date_finished,
+                         user_id=user_id)
         try:
             session.add(new_item)
             session.commit()
@@ -381,7 +423,8 @@ def new_book():
 
         except exc.IntegrityError as e:
             session.rollback()
-            flash(f'Error! You already have this book-author pairing: {title} by {first_name} {last_name}.')
+            flash(f'Error! You already have this book-author pairing: \
+                  {title} by {first_name} {last_name}.')
             return redirect(url_for('new_book'))
 
     else:
@@ -418,9 +461,17 @@ def add_author(first_name, last_name):
 # EDIT BOOK
 @app.route('/catalog/<genre>/<int:book_id>/edit', methods=['GET', 'POST'])
 def edit_book(genre, book_id):
+    user_id = getUserID(login_session['email'])
+
     # Check if user is logged in
     if 'username' not in login_session:
         return render_template('public.html', genres=genres)
+
+    # Check user_id is authorized for book_id
+    if check_user_book_authorized(user_id, book_id) is False:
+        flash('You are not authorized to edit this item.\
+                Please create your own item in order to edit.', 'flash')
+        return render_template('catalog.html', flash=flash)
 
     book = session.query(Books).filter_by(id=book_id).one()
 
@@ -451,7 +502,6 @@ def edit_book(genre, book_id):
             session.commit()
             flash('Book successfully edited!')
 
-            user_id = getUserID(login_session['email'])
             info = list(session.execute(q_book_info.format(book_id, user_id)))
             # Returns a list containing a single tuple, so get index 0.
             info = info[0]
@@ -460,12 +510,13 @@ def edit_book(genre, book_id):
         except exc.IntegrityError as e:
             session.rollback()
             session.flush()
-            flash(f'Error! You already have this book-author pairing: {entered_title} by {first_name} {last_name}.')
+            flash(f'Error! You already have this book-author pairing: \
+                  {entered_title} by {first_name} {last_name}.')
             return redirect(url_for('edit_book', genre=genre, book_id=book_id))
 
     else:
-        user_id = getUserID(login_session['email'])
-        edit_book_info = session.execute(q_edit_book_info.format(book_id, user_id))
+        edit_book_info = \
+            session.execute(q_edit_book_info.format(book_id, user_id))
         edit_book_info = list(edit_book_info)
         edit_book_info = [i for i in edit_book_info[0]]
 
@@ -482,28 +533,42 @@ def edit_book(genre, book_id):
         genres = session.execute(q_genres)
         genres = sorted([i[0] for i in genres])
 
-        return render_template('editBook.html', book_info=book_info, genres=genres)
+        return render_template('editBook.html',
+                               book_info=book_info,
+                               genres=genres)
 
 
 # DELETE BOOK
 @app.route('/catalog/<genre>/<int:book_id>/delete', methods=['GET', 'POST'])
 def delete_book(genre, book_id):
+    user_id = getUserID(login_session['email'])
+
     # Check if user is logged in
     if 'username' not in login_session:
         return render_template('public.html', genres=genres)
 
+    # Check user_id is authorized for book_id
+    if check_user_book_authorized(user_id, book_id) is False:
+        flash('You are not authorized to delete this item.', 'flash')
+        return render_template('catalog.html', flash=flash)
+
     book = session.query(Books).filter_by(id=book_id).one()
+
     if request.method == 'POST':
         session.delete(book)
         session.commit()
         flash('Book successfully DELETED!')
         return redirect(url_for('genre_items', genre=genre))
+
     else:
         user_id = getUserID(login_session['email'])
         info = list(session.execute(q_book_info.format(book_id, user_id)))
         # Returns a list containing a single tuple, so get index 0.
         info = info[0]
-        return render_template('deleteBook.html', genre=genre, book_id=book_id, info=info)
+        return render_template('deleteBook.html',
+                               genre=genre,
+                               book_id=book_id,
+                               info=info)
 
 
 if __name__ == '__main__':

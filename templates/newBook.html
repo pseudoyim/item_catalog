@@ -21,11 +21,11 @@
 	<form action="{{ url_for('new_book') }}" method="POST">
 
 		<p>Title:</p>
-		<input type="text" size="30" name="title">
+		<input type="text" size="30" name="title" required>
 		
 		<p>Author:</p>
-		<input type="text" size="30" name="author_last_name" placeholder="Last name">
-		<input type="text" size="30" name="author_first_name" placeholder="First name">
+		<input type="text" size="30" name="author_last_name" placeholder="Last name" required>
+		<input type="text" size="30" name="author_first_name" placeholder="First name" required>
 
 		<p>Genre:</p>
 		<select name="genre">
@@ -35,14 +35,14 @@
 		</select>
 
 		<p>Pages:</p>
-		<input type="text" size="10" name="pages">
+		<input type="text" size="10" name="pages" required>
 
 		<p>Date I finished reading:</p>
-		<input type="date" name="date_finished">
+		<input type="date" name="date_finished" required>
 
 		<p>Synopsis:</p>
 		<!-- <input type="text" size="100" name="synopsis"> -->
-		<textarea rows="4" cols="50" name="synopsis"></textarea>
+		<textarea rows="4" cols="50" name="synopsis" required></textarea>
 
 		<br><br>
 		<input type="submit" value="Create">

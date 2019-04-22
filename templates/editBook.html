@@ -21,11 +21,11 @@
 	<form action="{{ url_for('edit_book', genre=book_info.genre, book_id=book_info.id) }}" method="POST">
 
 		<p>Title:</p>
-		<input type="text" size="30" name="title" value="{{ book_info.title }}">
+		<input type="text" size="30" name="title" value="{{ book_info.title }}" required>
 		
 		<p>Author:</p>
-		<input type="text" size="30" name="author_last_name" value="{{ book_info.author_last_name }}">
-		<input type="text" size="30" name="author_first_name" value="{{ book_info.author_first_name }}">
+		<input type="text" size="30" name="author_last_name" value="{{ book_info.author_last_name }}" required>
+		<input type="text" size="30" name="author_first_name" value="{{ book_info.author_first_name }}" required>
 
 		<p>Genre:</p>
 		<select name="genre" {% if i == book_info.genre %} selected="{{ book_info.genre }}"{% endif %}>
@@ -35,13 +35,13 @@
 		</select>
 
 		<p>Pages:</p>
-		<input type="text" size="10" name="pages" value="{{ book_info.pages }}">
+		<input type="text" size="10" name="pages" value="{{ book_info.pages }}" required>
 
 		<p>Date I finished reading:</p>
-		<input type="date" name="date_finished" value="{{ book_info.date_finished }}">
+		<input type="date" name="date_finished" value="{{ book_info.date_finished }}" required>
 
 		<p>Synopsis:</p>
-		<textarea rows="4" cols="50" name="synopsis">{{ book_info.synopsis }}</textarea>
+		<textarea rows="4" cols="50" name="synopsis" required>{{ book_info.synopsis }}</textarea>
 
 		<br><br>
 		<input type="submit" value="Update">
