@@ -15,11 +15,11 @@ import string
 app = Flask(__name__)
 
 CLIENT_ID = json.loads(
-    open('client_secrets.json', 'r').read())['web']['client_id']
+    open('/var/www/udacity_fsnd/item_catalog/item_catalog/client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = 'My Books Catalog Application'
 
 # Connect to postgres database and create database session.
-engine = create_engine('postgres://owner:password@localhost/catalog')
+engine = create_engine('postgres://owner:pass@localhost/catalog')
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
@@ -118,7 +118,7 @@ def gconnect():
 
     try:
         # Upgrade the authorization code into a credentials object
-        oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
+        oauth_flow = flow_from_clientsecrets('/var/www/udacity_fsnd/item_catalog/item_catalog/client_secrets.json', scope='')
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:
@@ -216,7 +216,8 @@ def getUserID(email):
         user = session.query(Users).filter_by(email=email).one()
         return user.id
     except:
-        return None
+	user_id = createUser(login_session)
+	return user_id
 
 
 def check_user_book_authorized(user_id, book_id):
@@ -384,19 +385,20 @@ def new_book():
             session.add(new_author)
             session.commit()
 
-        author_id = session.execute(f"SELECT id \
+        author_id = session.execute("SELECT id \
                                     FROM authors \
-                                    WHERE first_name='{first_name}' \
-                                      AND last_name='{last_name}';")
+                                    WHERE first_name='{}' \
+                                      AND last_name='{}';".format(first_name, last_name))
         author_id = list(author_id)
         print('AUTHOR_ID', author_id)
         author_id = author_id[0][0]
 
-        genre_id = session.execute(f"SELECT id \
+        genre_id = session.execute("SELECT id \
                                    FROM genres \
-                                   WHERE genre='{request.form['genre']}';")
+                                   WHERE genre='{}';".format(request.form['genre']))
         genre_id = list(genre_id)[0][0]
-        title = request.form['title']
+        genre = request.form['genre']
+	title = request.form['title']
         pages = request.form['pages']
         synopsis = request.form['synopsis']
         date_finished = request.form['date_finished']
@@ -412,19 +414,19 @@ def new_book():
             session.add(new_item)
             session.commit()
 
-            new_book_id = session.execute(f"SELECT MAX(id) FROM books;")
+            new_book_id = session.execute("SELECT MAX(id) FROM books;")
             new_book_id = list(new_book_id)[0][0]
 
             user_id = getUserID(login_session['email'])
             info = session.execute(q_book_info.format(new_book_id, user_id))
             info = [i for i in list(info)[0]]
-            flash(f'New book added: {info[0]}')
-            return render_template('book.html', info=info, book_id=new_book_id)
+            flash('New book added: {}'.format(info[0]))
+            return render_template('book.html', info=info, book_id=new_book_id, genre=genre)
 
         except exc.IntegrityError as e:
             session.rollback()
-            flash(f'Error! You already have this book-author pairing: \
-                  {title} by {first_name} {last_name}.')
+            flash('Error! You already have this book-author pairing: \
+                  {title} by {} {}.'.format(first_name, last_name))
             return redirect(url_for('new_book'))
 
     else:
@@ -455,7 +457,7 @@ def add_author(first_name, last_name):
     new_author = Authors(first_name=first_name, last_name=last_name)
     session.add(new_author)
     session.commit()
-    return session.execute(f"SELECT MAX(id) FROM authors;")
+    return session.execute("SELECT MAX(id) FROM authors;")
 
 
 # EDIT BOOK
@@ -484,7 +486,9 @@ def edit_book(genre, book_id):
         first_name = request.form['author_first_name'].strip()
         last_name = request.form['author_last_name'].strip()
         existing_author_id = lookup_author_id(first_name, last_name)
-        if existing_author_id:
+        print 'existing_author_id', existing_author_id
+	#existing_author_id = str(existing_author_id[0][0])
+	if existing_author_id:
             book.author_id = existing_author_id
         else:
             new_author_id = add_author(first_name, last_name)
@@ -505,13 +509,13 @@ def edit_book(genre, book_id):
             info = list(session.execute(q_book_info.format(book_id, user_id)))
             # Returns a list containing a single tuple, so get index 0.
             info = info[0]
-            return render_template('book.html', book_id=book_id, info=info)
+            return render_template('book.html', book_id=book_id, info=info, genre=genre)
 
         except exc.IntegrityError as e:
             session.rollback()
             session.flush()
-            flash(f'Error! You already have this book-author pairing: \
-                  {entered_title} by {first_name} {last_name}.')
+            flash('Error! You already have this book-author pairing: \
+                  {entered_title} by {} {}.'.format(first_name, last_name))
             return redirect(url_for('edit_book', genre=genre, book_id=book_id))
 
     else:
