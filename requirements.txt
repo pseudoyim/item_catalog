@@ -9,7 +9,7 @@ click==7.0
 cryptography==2.6.1
 decorator==4.4.0
 flask==1.0.2
-httplib2==0.12.1
+httplib2==0.18.0
 idna==2.8
 ipython==7.4.0
 ipython_genutils==0.2.0
