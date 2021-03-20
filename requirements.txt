@@ -15,7 +15,7 @@ ipython==7.4.0
 ipython_genutils==0.2.0
 itsdangerous==1.1.0
 jedi==0.13.3
-jinja2==2.10
+jinja2==2.11.3
 krb5==1.16.1
 markupsafe==1.1.1
 ncurses==6.1
