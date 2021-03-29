@@ -32,7 +32,7 @@ pyasn1==0.4.4
 pyasn1-modules==0.2.4
 pycodestyle==2.5.0
 pycparser==2.19
-pygments==2.3.1
+pygments==2.7.4
 pyopenssl==19.0.0
 pysocks==1.6.8
 python==3.6.8
