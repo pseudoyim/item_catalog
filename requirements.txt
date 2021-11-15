@@ -24,7 +24,7 @@ openssl==1.1.1b
 parso==0.3.4
 pexpect==4.6.0
 pickleshare==0.7.5
-pip==19.0.3
+pip==21.1
 prompt_toolkit==2.0.9
 psycopg2==2.7.6.1
 ptyprocess==0.6.0
